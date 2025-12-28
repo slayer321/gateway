@@ -297,9 +297,11 @@ func TestBuildRateLimitRuleQueryParams(t *testing.T) {
 					{
 						QueryParams: []egv1a1.QueryParamMatch{
 							{
-								Name:  "user",
-								Type:  ptr.To(egv1a1.QueryParamMatchExact),
-								Value: ptr.To("alice"),
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchExact),
+									Value: "alice",
+								},
 							},
 						},
 					},
@@ -312,8 +314,8 @@ func TestBuildRateLimitRuleQueryParams(t *testing.T) {
 			expected: &ir.RateLimitRule{
 				QueryParamMatches: []*ir.QueryParamMatch{
 					{
-						Name: "user",
 						StringMatch: ir.StringMatch{
+							Name:   "user",
 							Exact:  ptr.To("alice"),
 							Invert: nil,
 						},
@@ -364,9 +366,11 @@ func TestBuildRateLimitRuleQueryParams(t *testing.T) {
 						},
 						QueryParams: []egv1a1.QueryParamMatch{
 							{
-								Name:  "user",
-								Type:  ptr.To(egv1a1.QueryParamMatchExact),
-								Value: ptr.To("alice"),
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchExact),
+									Value: "alice",
+								},
 							},
 						},
 					},
@@ -379,8 +383,8 @@ func TestBuildRateLimitRuleQueryParams(t *testing.T) {
 			expected: &ir.RateLimitRule{
 				QueryParamMatches: []*ir.QueryParamMatch{
 					{
-						Name: "user",
 						StringMatch: ir.StringMatch{
+							Name:   "user",
 							Exact:  ptr.To("alice"),
 							Invert: nil,
 						},
@@ -413,9 +417,11 @@ func TestBuildRateLimitRuleQueryParams(t *testing.T) {
 						},
 						QueryParams: []egv1a1.QueryParamMatch{
 							{
-								Name:  "user",
-								Type:  ptr.To(egv1a1.QueryParamMatchExact),
-								Value: ptr.To("alice"),
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchExact),
+									Value: "alice",
+								},
 							},
 						},
 					},
@@ -428,8 +434,8 @@ func TestBuildRateLimitRuleQueryParams(t *testing.T) {
 			expected: &ir.RateLimitRule{
 				QueryParamMatches: []*ir.QueryParamMatch{
 					{
-						Name: "user",
 						StringMatch: ir.StringMatch{
+							Name:   "user",
 							Exact:  ptr.To("alice"),
 							Invert: nil,
 						},
@@ -448,6 +454,300 @@ func TestBuildRateLimitRuleQueryParams(t *testing.T) {
 					Distinct: true,
 				},
 				Shared: nil,
+			},
+			expectError: false,
+		},
+		{
+			name: "query parameters with RegularExpression",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: []egv1a1.RateLimitSelectCondition{
+					{
+						QueryParams: []egv1a1.QueryParamMatch{
+							{
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchRegularExpression),
+									Value: "alice.*",
+								},
+							},
+						},
+					},
+				},
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected: &ir.RateLimitRule{
+				QueryParamMatches: []*ir.QueryParamMatch{
+					{
+						StringMatch: ir.StringMatch{
+							Name:      "user",
+							SafeRegex: ptr.To("alice.*"),
+							Invert:    nil,
+						},
+					},
+				},
+				Limit: ir.RateLimitValue{
+					Requests: 10,
+					Unit:     ir.RateLimitUnit(egv1a1.RateLimitUnitHour),
+				},
+				HeaderMatches: []*ir.StringMatch{},
+				MethodMatches: []*ir.StringMatch{},
+				Shared:        nil,
+			},
+			expectError: false,
+		},
+		{
+			name: "query parameters with Distinct",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: []egv1a1.RateLimitSelectCondition{
+					{
+						QueryParams: []egv1a1.QueryParamMatch{
+							{
+								Name:     "user",
+								MatchType: ptr.To(egv1a1.QueryParamMatchDistinct),
+							},
+						},
+					},
+				},
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected: &ir.RateLimitRule{
+				QueryParamMatches: []*ir.QueryParamMatch{
+					{
+						StringMatch: ir.StringMatch{
+							Name:     "user",
+							Distinct: true,
+						},
+					},
+				},
+				Limit: ir.RateLimitValue{
+					Requests: 10,
+					Unit:     ir.RateLimitUnit(egv1a1.RateLimitUnitHour),
+				},
+				HeaderMatches: []*ir.StringMatch{},
+				MethodMatches: []*ir.StringMatch{},
+				Shared:        nil,
+			},
+			expectError: false,
+		},
+		{
+			name: "query parameters with Invert",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: []egv1a1.RateLimitSelectCondition{
+					{
+						QueryParams: []egv1a1.QueryParamMatch{
+							{
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchExact),
+									Value: "alice",
+								},
+								Invert: ptr.To(true),
+							},
+						},
+					},
+				},
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected: &ir.RateLimitRule{
+				QueryParamMatches: []*ir.QueryParamMatch{
+					{
+						StringMatch: ir.StringMatch{
+							Name:   "user",
+							Exact:  ptr.To("alice"),
+							Invert: ptr.To(true),
+						},
+					},
+				},
+				Limit: ir.RateLimitValue{
+					Requests: 10,
+					Unit:     ir.RateLimitUnit(egv1a1.RateLimitUnitHour),
+				},
+				HeaderMatches: []*ir.StringMatch{},
+				MethodMatches: []*ir.StringMatch{},
+				Shared:        nil,
+			},
+			expectError: false,
+		},
+		{
+			name: "query parameters with invalid regex",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: []egv1a1.RateLimitSelectCondition{
+					{
+						QueryParams: []egv1a1.QueryParamMatch{
+							{
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchRegularExpression),
+									Value: "[invalid",
+								},
+							},
+						},
+					},
+				},
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected:    nil,
+			expectError: true,
+			errorMsg:    "regex",
+		},
+		{
+			name: "query parameters Distinct with Invert (should error)",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: []egv1a1.RateLimitSelectCondition{
+					{
+						QueryParams: []egv1a1.QueryParamMatch{
+							{
+								Name:     "user",
+								MatchType: ptr.To(egv1a1.QueryParamMatchDistinct),
+								Invert:   ptr.To(true),
+							},
+						},
+					},
+				},
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected:    nil,
+			expectError: true,
+			errorMsg:    "Invert is not applicable for distinct query parameter match type",
+		},
+		{
+			name: "query parameters with missing value for Exact",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: []egv1a1.RateLimitSelectCondition{
+					{
+						QueryParams: []egv1a1.QueryParamMatch{
+							{
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchExact),
+									Value: "",
+								},
+							},
+						},
+					},
+				},
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected:    nil,
+			expectError: true,
+			errorMsg:    "value is required for Exact query parameter match",
+		},
+		{
+			name: "query parameters with missing value for RegularExpression",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: []egv1a1.RateLimitSelectCondition{
+					{
+						QueryParams: []egv1a1.QueryParamMatch{
+							{
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchRegularExpression),
+									Value: "",
+								},
+							},
+						},
+					},
+				},
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected:    nil,
+			expectError: true,
+			errorMsg:    "value is required for RegularExpression query parameter match",
+		},
+		{
+			name: "query parameters with multiple query params",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: []egv1a1.RateLimitSelectCondition{
+					{
+						QueryParams: []egv1a1.QueryParamMatch{
+							{
+								Name: "user",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchExact),
+									Value: "alice",
+								},
+							},
+							{
+								Name: "role",
+								StringMatch: egv1a1.StringMatch{
+									Type:  ptr.To(egv1a1.StringMatchExact),
+									Value: "admin",
+								},
+							},
+						},
+					},
+				},
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected: &ir.RateLimitRule{
+				QueryParamMatches: []*ir.QueryParamMatch{
+					{
+						StringMatch: ir.StringMatch{
+							Name:   "user",
+							Exact:  ptr.To("alice"),
+							Invert: nil,
+						},
+					},
+					{
+						StringMatch: ir.StringMatch{
+							Name:   "role",
+							Exact:  ptr.To("admin"),
+							Invert: nil,
+						},
+					},
+				},
+				Limit: ir.RateLimitValue{
+					Requests: 10,
+					Unit:     ir.RateLimitUnit(egv1a1.RateLimitUnitHour),
+				},
+				HeaderMatches: []*ir.StringMatch{},
+				MethodMatches: []*ir.StringMatch{},
+				Shared:        nil,
+			},
+			expectError: false,
+		},
+		{
+			name: "query parameters with no client selectors",
+			rule: egv1a1.RateLimitRule{
+				ClientSelectors: nil,
+				Limit: egv1a1.RateLimitValue{
+					Requests: 10,
+					Unit:     egv1a1.RateLimitUnitHour,
+				},
+			},
+			expected: &ir.RateLimitRule{
+				QueryParamMatches: nil,
+				Limit: ir.RateLimitValue{
+					Requests: 10,
+					Unit:     ir.RateLimitUnit(egv1a1.RateLimitUnitHour),
+				},
+				HeaderMatches: []*ir.StringMatch{},
+				MethodMatches: []*ir.StringMatch{},
+				Shared:        nil,
 			},
 			expectError: false,
 		},
