@@ -1344,8 +1344,9 @@ func buildRateLimitRule(rule egv1a1.RateLimitRule) (*ir.RateLimitRule, error) {
 					stringMatchType = *queryParam.Type
 				}
 
-				// For Exact match
-				if stringMatchType == egv1a1.StringMatchExact {
+				// Handle different match types using switch statement
+				switch stringMatchType {
+				case egv1a1.StringMatchExact:
 					if queryParam.Value == "" {
 						return nil, fmt.Errorf("value is required for Exact query parameter match")
 					}
@@ -1354,7 +1355,7 @@ func buildRateLimitRule(rule egv1a1.RateLimitRule) (*ir.RateLimitRule, error) {
 						Exact:  &queryParam.Value,
 						Invert: queryParam.Invert,
 					}
-				} else if stringMatchType == egv1a1.StringMatchRegularExpression {
+				case egv1a1.StringMatchRegularExpression:
 					if queryParam.Value == "" {
 						return nil, fmt.Errorf("value is required for RegularExpression query parameter match")
 					}
@@ -1366,7 +1367,7 @@ func buildRateLimitRule(rule egv1a1.RateLimitRule) (*ir.RateLimitRule, error) {
 						SafeRegex: &queryParam.Value,
 						Invert:    queryParam.Invert,
 					}
-				} else {
+				default:
 					return nil, fmt.Errorf(
 						"unable to translate rateLimit. QueryParamMatch only supports Exact and RegularExpression via StringMatch, or Distinct via MatchType field")
 				}
